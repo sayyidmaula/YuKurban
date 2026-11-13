@@ -5,37 +5,35 @@ Sumber kebenaran tunggal: `docs/PRD.md`
 ## Status Fase
 
 - [x] **Fase 1**: Inisialisasi proyek, autentikasi, peran, layout dan token desain, PWA dasar.
-- [~] **Fase 2**: Rencana tabungan, tagihan simulasi, `LedgerService`, dashboard, tarik dana, autodebet.
-- [ ] **Fase 3**: Peternak dan hewan: profil, verifikasi, CRUD hewan + media, review admin, katalog.
+- [x] **Fase 2**: Rencana tabungan, tagihan simulasi, `LedgerService`, dashboard, tarik dana, autodebet.
+- [~] **Fase 3**: Peternak dan hewan: profil, verifikasi, CRUD hewan + media, review admin, katalog.
 - [ ] **Fase 4**: Wilayah, zona, biaya, jendela musim, kuota (Filament).
 - [ ] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
 - [ ] **Fase 6**: Status, bukti, timeline; dua alur metode.
 - [ ] **Fase 7**: Tiket tiga tipe, catatan pesanan, notifikasi, pengumuman.
 - [ ] **Fase 8**: Laporan, audit log, seeder lengkap, polesan UI, Lighthouse, pengujian.
 
-## Langkah Fase 2
-- Migrasi: `price_tiers`, `savings_plans`, `payment_invoices`, `ledger_entries`.
-- Enums: `LedgerType` (`setoran`, `pembelian`, `pengembalian_dana`, `penarikan`, `koreksi`).
+## Langkah Fase 3
+- Migrasi: `regions`, `peternak_profiles`, `animals`, `animal_media`.
+- Enums: `AnimalType` (`kambing`, `domba`, `sapi`), `AnimalStatus` (`draft`, `menunggu_review`, `tayang`, `dipesan`, `terjual`, `ditarik`).
 - Model:
-  - `LedgerEntry`: tolak update dan delete (`static::updating`, `static::deleting`).
-  - `SavingsPlan`: balance_cached, autodebet fields.
-  - `PaymentInvoice`: va_code, amount, status (`menunggu`, `berhasil`, `gagal`, `kedaluwarsa`), source (`manual`, `autodebet`).
-  - `PriceTier`: name, min_price, max_price, sort_order.
-- Services:
-  - `LedgerService`: satu-satunya pintu tulis perubahan saldo dengan `DB::transaction` dan `lockForUpdate` pada `SavingsPlan`. Nominal bigint integer rupiah tanpa desimal.
-  - `InvoiceService`: pembuatan tagihan VA simulasi 16 digit berlaku 24 jam, callback simulasi bayar berhasil (mencatat ledger `setoran` via `LedgerService`) dan simulasi gagal/kedaluwarsa.
-  - `PlanService`: pembuatan rencana tabungan, kalkulasi cicilan bulanan, penarikan dana (ledger `penarikan` via `LedgerService`), toggle autodebet.
-- Controllers & UI Penabung:
-  - `/rencana` (daftar rencana), `/rencana/buat` (form buat rencana dengan pilihan tier), `/rencana/{id}` (detail rencana, progress bar emas, riwayat transaksi ledger).
-  - `/rencana/{id}/setor` (input nominal setoran atau pilih cicilan bulanan), `/tagihan/{id}` (halaman pembayaran simulasi VA dengan banner mode simulasi, tombol "Simulasikan Berhasil" dan "Simulasikan Gagal").
-  - `/rencana/{id}/tarik` (tarik saldo dengan validasi saldo cukup).
-  - Dashboard Beranda Penabung (`/beranda`): Hero saldo ala mobile banking (gradien green-900 ke green-600, toggle sembunyikan/tampilkan saldo, daftar transaksi dikelompokkan tanggal).
-- Scheduler / Command:
-  - `ExpireInvoices` (menit): tagihan `menunggu` lewat `expires_at` jadi `kedaluwarsa`.
-  - `GenerateAutodebetInvoices` (harian 06:00): generate invoice bagi rencana yang autodebet-nya aktif dan tanggal jatuh tempo hari ini.
-- Tests Fase 2:
-  - Aturan bisnis BR-01 (append-only ledger, tolak update/delete).
-  - Aturan bisnis BR-02 (bigint uang tanpa desimal).
-  - Aturan bisnis BR-03 (LedgerService transaksi tunggal + concurrency lock testing di MySQL).
-  - Invoices simulasi bayar berhasil menambah saldo, gagal/kedaluwarsa tidak menambah saldo.
-  - Penarikan dana mengurangi saldo via LedgerService dan tolak saldo negatif.
+  - `Region`: province, city, is_active.
+  - `PeternakProfile`: user_id, farm_name, address, region_id, description, farm_photo_path, status (`menunggu`, `terverifikasi`, `ditolak`, `nonaktif`), rejection_reason, verified_by, verified_at.
+  - `Animal`: peternak_profile_id, type, title, age_months, weight_kg, health_notes, price, region_id, status, reserved_by, reserved_until, review_note, reviewed_by, reviewed_at. (Satu baris = satu hewan fisik).
+  - `AnimalMedia`: animal_id, type (`foto`, `video`), path, caption, sort_order.
+- Validasi data hewan (BR-16): jenis, umur (bulan), bobot, catatan kesehatan, harga, minimal 3 foto, 1 video, wilayah.
+- Peternak UI:
+  - `/peternak/profil` (lengkapi profil kandang, submit verifikasi).
+  - `/peternak/hewan` (daftar hewan milik peternak), `/peternak/hewan/buat` (tambah hewan baru + upload foto/video), `/peternak/hewan/{id}/edit` (edit hewan status draft/menunggu_review).
+- Admin Review:
+  - Verifikasi peternak (terverifikasi / ditolak dengan alasan).
+  - Review hewan kurban (tayang / revisi catatan).
+- Publik & Penabung Katalog:
+  - `/katalog` (katalog hewan dengan filter jenis, tingkat harga, wilayah, sort harga; mode pratinjau untuk tamu, mode aktif untuk penabung).
+  - `/katalog/{id}` (detail hewan: galeri foto, video, info umur/bobot/kesehatan/kandang/daerah tanpa kontak langsung).
+- Tests Fase 3:
+  - Profil peternak & status verifikasi.
+  - CRUD hewan kurban & validasi kelengkapan BR-16.
+  - Penolakan akses peternak lain terhadap hewan yang bukan miliknya.
+  - Katalog menampilkan hanya hewan `tayang`.
+  - BR-10: Katalog dan detail hewan tidak menampilkan kontak/alamat pribadi peternak kepada pembeli.

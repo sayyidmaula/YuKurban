@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Penabung\BerandaController;
+use App\Http\Controllers\Penabung\InvoiceController;
+use App\Http\Controllers\Penabung\PlanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use Illuminate\Http\Request;
@@ -40,9 +43,21 @@ Route::get('/dashboard', function (Request $request) {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:penabung'])->group(function () {
-    Route::get('/beranda', function () {
-        return Inertia::render('Penabung/Beranda');
-    })->name('beranda');
+    Route::get('/beranda', [BerandaController::class, 'index'])->name('beranda');
+
+    Route::get('/rencana', [PlanController::class, 'index'])->name('rencana.index');
+    Route::get('/rencana/buat', [PlanController::class, 'create'])->name('rencana.create');
+    Route::post('/rencana', [PlanController::class, 'store'])->name('rencana.store');
+    Route::get('/rencana/{plan}', [PlanController::class, 'show'])->name('rencana.show');
+    Route::get('/rencana/{plan}/setor', [PlanController::class, 'setor'])->name('rencana.setor');
+    Route::post('/rencana/{plan}/setor', [PlanController::class, 'processSetor'])->name('rencana.setor.process');
+    Route::get('/rencana/{plan}/tarik', [PlanController::class, 'tarik'])->name('rencana.tarik');
+    Route::post('/rencana/{plan}/tarik', [PlanController::class, 'processTarik'])->name('rencana.tarik.process');
+    Route::post('/rencana/{plan}/autodebet', [PlanController::class, 'updateAutodebet'])->name('rencana.autodebet');
+
+    Route::get('/tagihan/{invoice}', [InvoiceController::class, 'show'])->name('tagihan.show');
+    Route::post('/tagihan/{invoice}/simulasi-berhasil', [InvoiceController::class, 'simulatePay'])->name('tagihan.simulasi.berhasil');
+    Route::post('/tagihan/{invoice}/simulasi-gagal', [InvoiceController::class, 'simulateFail'])->name('tagihan.simulasi.gagal');
 
     Route::get('/akun', function (Request $request) {
         return Inertia::render('Penabung/Akun');
@@ -74,7 +89,7 @@ Route::prefix('peternak')->name('peternak.')->middleware(['auth', 'role:peternak
 
 /*
 |--------------------------------------------------------------------------
-| Profile Routes (Breeze standard)
+| Profile Routes
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
