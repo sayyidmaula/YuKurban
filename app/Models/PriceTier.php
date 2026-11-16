@@ -31,3 +31,4 @@ class PriceTier extends Model
         return $this->hasMany(SavingsPlan::class, 'tier_id');
     }
 }
+

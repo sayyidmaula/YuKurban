@@ -286,3 +286,4 @@ export default function RencanaShow({ plan, ledgerEntries = [], pendingInvoices 
         </PenabungLayout>
     );
 }
+

@@ -227,3 +227,4 @@ class PlanController extends Controller
         return back()->with('success', 'Pengaturan autodebet berhasil diperbarui.');
     }
 }
+

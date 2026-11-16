@@ -12,3 +12,4 @@ export function formatNumber(number) {
     if (number === undefined || number === null) return '0';
     return new Intl.NumberFormat('id-ID').format(number);
 }
+

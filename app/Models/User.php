@@ -6,6 +6,8 @@ namespace App\Models;
 use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -56,5 +58,15 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === Role::ADMIN;
+    }
+
+    public function peternakProfile(): HasOne
+    {
+        return $this->hasOne(PeternakProfile::class);
+    }
+
+    public function savingsPlans(): HasMany
+    {
+        return $this->hasMany(SavingsPlan::class);
     }
 }

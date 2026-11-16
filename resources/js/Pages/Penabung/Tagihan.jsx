@@ -198,3 +198,4 @@ export default function Tagihan({ invoice }) {
         </PenabungLayout>
     );
 }
+

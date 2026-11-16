@@ -65,3 +65,4 @@ class SavingsPlan extends Model
         return (int) min(100, round(($this->balance_cached / $this->target_amount) * 100));
     }
 }
+

@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\Penabung\BerandaController;
 use App\Http\Controllers\Penabung\InvoiceController;
 use App\Http\Controllers\Penabung\PlanController;
+use App\Http\Controllers\Peternak\HewanController;
+use App\Http\Controllers\Peternak\ProfilController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use Illuminate\Http\Request;
@@ -19,6 +22,9 @@ Route::get('/faq', [PublicController::class, 'faq'])->name('faq');
 Route::get('/ketentuan', [PublicController::class, 'ketentuan'])->name('ketentuan');
 Route::get('/hubungi', [PublicController::class, 'hubungi'])->name('hubungi');
 Route::post('/hubungi', [PublicController::class, 'storeContact'])->name('hubungi.store');
+
+Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog.index');
+Route::get('/katalog/{animal}', [KatalogController::class, 'show'])->name('katalog.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -74,9 +80,14 @@ Route::prefix('peternak')->name('peternak.')->middleware(['auth', 'role:peternak
         return Inertia::render('Peternak/Beranda');
     })->name('beranda');
 
-    Route::get('/profil', function () {
-        return Inertia::render('Peternak/Profil');
-    })->name('profil');
+    Route::get('/profil', [ProfilController::class, 'show'])->name('profil');
+    Route::post('/profil', [ProfilController::class, 'update'])->name('profil.update');
+
+    Route::get('/hewan', [HewanController::class, 'index'])->name('hewan.index');
+    Route::get('/hewan/buat', [HewanController::class, 'create'])->name('hewan.create');
+    Route::post('/hewan', [HewanController::class, 'store'])->name('hewan.store');
+    Route::get('/hewan/{animal}/edit', [HewanController::class, 'edit'])->name('hewan.edit');
+    Route::match(['put', 'patch'], '/hewan/{animal}', [HewanController::class, 'update'])->name('hewan.update');
 
     Route::get('/bantuan', function () {
         return Inertia::render('Peternak/Bantuan');

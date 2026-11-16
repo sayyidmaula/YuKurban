@@ -50,3 +50,4 @@ class PaymentInvoice extends Model
         return $this->status === 'kedaluwarsa' || ($this->isPending() && $this->expires_at->isPast());
     }
 }
+

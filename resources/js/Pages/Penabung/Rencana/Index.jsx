@@ -122,3 +122,4 @@ export default function RencanaIndex({ plans = [], totalBalance = 0 }) {
         </PenabungLayout>
     );
 }
+

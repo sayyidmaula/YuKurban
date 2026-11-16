@@ -138,3 +138,4 @@ test('BR-02: nominal ledger harus bilangan bulat positif tanpa desimal', functio
         actor: $this->user
     ))->toThrow(InvalidArgumentException::class);
 });
+
