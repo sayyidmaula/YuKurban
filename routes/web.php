@@ -5,11 +5,14 @@ use App\Http\Controllers\Penabung\BerandaController;
 use App\Http\Controllers\Penabung\InvoiceController;
 use App\Http\Controllers\Penabung\OrderController as PenabungOrderController;
 use App\Http\Controllers\Penabung\PlanController;
+use App\Http\Controllers\Penabung\TicketController as PenabungTicketController;
 use App\Http\Controllers\Peternak\HewanController;
 use App\Http\Controllers\Peternak\OrderController as PeternakOrderController;
 use App\Http\Controllers\Peternak\ProfilController;
+use App\Http\Controllers\Peternak\TicketController as PeternakTicketController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
+use App\Models\Announcement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -77,6 +80,19 @@ Route::middleware(['auth', 'role:penabung'])->group(function () {
     Route::post('/pesanan/{order}/batal', [PenabungOrderController::class, 'cancel'])->name('pesanan.cancel');
     Route::post('/pesanan/{order}/selesai', [PenabungOrderController::class, 'complete'])->name('pesanan.complete');
 
+    // Tiket & Pusat Bantuan (Fase 7)
+    Route::get('/tiket', [PenabungTicketController::class, 'index'])->name('tiket.index');
+    Route::get('/tiket/buat', [PenabungTicketController::class, 'create'])->name('tiket.create');
+    Route::post('/tiket', [PenabungTicketController::class, 'store'])->name('tiket.store');
+    Route::get('/tiket/{ticket}', [PenabungTicketController::class, 'show'])->name('tiket.show');
+    Route::post('/tiket/{ticket}/balas', [PenabungTicketController::class, 'reply'])->name('tiket.reply');
+
+    // Pengumuman Musim Penabung (Fase 7)
+    Route::get('/pengumuman', function () {
+        $announcements = Announcement::forAudience('penabung')->latest()->paginate(10);
+        return Inertia::render('Penabung/Pengumuman', ['announcements' => $announcements]);
+    })->name('pengumuman');
+
     Route::get('/akun', function (Request $request) {
         return Inertia::render('Penabung/Akun');
     })->name('akun');
@@ -107,12 +123,14 @@ Route::prefix('peternak')->name('peternak.')->middleware(['auth', 'role:peternak
     Route::post('/pesanan/{order}/catatan', [PeternakOrderController::class, 'addNote'])->name('pesanan.note');
     Route::get('/payout', [PeternakOrderController::class, 'payoutIndex'])->name('payout.index');
 
-    Route::get('/bantuan', function () {
-        return Inertia::render('Peternak/Bantuan');
-    })->name('bantuan');
+    // Bantuan & Pengumuman Peternak (Fase 7)
+    Route::get('/bantuan', [PeternakTicketController::class, 'index'])->name('bantuan');
+    Route::post('/bantuan', [PeternakTicketController::class, 'store'])->name('bantuan.store');
+    Route::post('/bantuan/{ticket}/balas', [PeternakTicketController::class, 'reply'])->name('bantuan.reply');
 
     Route::get('/pengumuman', function () {
-        return Inertia::render('Peternak/Pengumuman');
+        $announcements = Announcement::forAudience('peternak')->latest()->paginate(10);
+        return Inertia::render('Peternak/Pengumuman', ['announcements' => $announcements]);
     })->name('pengumuman');
 });
 

@@ -10,8 +10,37 @@ Sumber kebenaran tunggal: `docs/PRD.md`
 - [x] **Fase 4**: Wilayah, zona, biaya, jendela musim, kuota (Filament / Admin Panel).
 - [x] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
 - [x] **Fase 6**: Status, bukti, timeline; dua alur metode.
-- [ ] **Fase 7**: Tiket tiga tipe, catatan pesanan, notifikasi, pengumuman.
+- [x] **Fase 7**: Tiket tiga tipe, catatan pesanan, notifikasi, pengumuman.
 - [ ] **Fase 8**: Laporan, audit log, seeder lengkap, polesan UI, Lighthouse, pengujian.
+
+## Langkah Fase 7
+- Migrasi: `tickets`, `ticket_replies`, `ticket_attachments`, `announcements`, `notifications`.
+- Enums & Models:
+  - `TicketType` (`pertanyaan_prabeli`, `laporan_masalah`, `bantuan_peternak`), `TicketStatus` (`dibuka`, `ditanggapi`, `diputuskan`, `selesai`, `ditolak`), `TicketDecision` (`ganti_hewan`, `dana_kembali`, `ditolak`).
+  - `Ticket`, `TicketReply`, `TicketAttachment`, `Announcement` dengan scope audience (`semua`, `penabung`, `peternak`).
+- Service `TicketService`:
+  - Pembuatan tiket pra-beli terikat hewan kurban.
+  - Pembuatan tiket bantuan peternak untuk kendala operasional/kemitraan.
+  - Pembuatan tiket laporan masalah terikat pesanan dengan validasi kepemilikan dan batas waktu 48 jam pasca tiba/salur (BR-15).
+  - Penandaan pesanan menjadi sengketa (`is_disputed = true`) untuk menunda auto-confirm.
+  - Balasan tiket dengan opsi tandai FAQ publik tanpa identitas penanya.
+  - Putusan admin untuk sengketa:
+    - `dana_kembali`: refund penuh via `LedgerService` (pengembalian_dana, masuk, BR-01, BR-03), pembatalan payout (BR-13), dan pembatalan pesanan.
+    - `ganti_hewan`: dicatat dalam putusan dan pelepasan dispute.
+    - `ditolak`: pencatatan alasan penolakan dan pelepasan dispute.
+  - Penutupan tiket (`closeTicket`).
+- Filament Admin Panel:
+  - `TicketResource` (`/admin/tickets`): tabel filter tipe & status, aksi balas tiket (dengan opsi FAQ publik), aksi putusan sengketa, aksi tutup tiket.
+  - `AnnouncementResource` (`/admin/announcements`): CRUD pengumuman dengan segmentasi audiens (`semua`, `penabung`, `peternak`).
+- UI & Routes:
+  - Penabung: Daftar & Detail tiket (`/tiket`), formulir buka tiket baru (`/tiket/buat`), pengumuman resmi kurban (`/pengumuman`).
+  - Peternak: Pusat bantuan peternak & riwayat tiket (`/peternak/bantuan`), pengumuman mitra (`/peternak/pengumuman`).
+- Tests Fase 7 (`TicketServiceTest.php`):
+  - Pembuatan tiket pra-beli dan bantuan peternak.
+  - Validasi kepemilikan pesanan dan batas waktu lapor 48 jam (BR-15).
+  - Balasan tiket, pembaruan status, dan penandaan FAQ publik.
+  - Putusan sengketa dana kembali dengan pengembalian saldo via `LedgerService` dan pembatalan payout.
+  - Scoping pengumuman berdasarkan target audiens.
 
 ## Langkah Fase 6
 - Migrasi: `order_evidences` (stage, type, path, uploaded_by), `order_notes` (user_id, body).
