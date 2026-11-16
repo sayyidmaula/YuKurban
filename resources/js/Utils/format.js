@@ -13,3 +13,16 @@ export function formatNumber(number) {
     return new Intl.NumberFormat('id-ID').format(number);
 }
 
+export function formatTanggalWaktu(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta',
+    }).format(date);
+}
+

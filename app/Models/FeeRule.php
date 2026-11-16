@@ -34,3 +34,4 @@ class FeeRule extends Model
         return static::where('animal_type', $val)->first();
     }
 }
+

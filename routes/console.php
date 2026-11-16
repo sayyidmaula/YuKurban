@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\OrderStatus;
+use App\Models\Order;
 use App\Services\InvoiceService;
+use App\Services\OrderService;
 use App\Services\PlanService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -21,5 +24,18 @@ Artisan::command('autodebet:generate', function (PlanService $planService) {
     $this->info("Generated {$count} autodebet invoices for day {$today}.");
 })->purpose('Generate daily autodebet invoices for due savings plans');
 
+Artisan::command('reservations:expire', function (OrderService $orderService) {
+    $expiredOrders = Order::where('status', OrderStatus::DIRESERVASI)
+        ->where('reserved_until', '<=', now())
+        ->get();
+
+    foreach ($expiredOrders as $order) {
+        $orderService->expireReservation($order);
+    }
+
+    $this->info("Processed {$expiredOrders->count()} expired reservations.");
+})->purpose('Expire pending reservations past reserved_until time');
+
 Schedule::command('invoices:expire')->everyMinute();
+Schedule::command('reservations:expire')->everyFiveMinutes();
 Schedule::command('autodebet:generate')->dailyAt('06:00');

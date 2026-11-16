@@ -8,10 +8,30 @@ Sumber kebenaran tunggal: `docs/PRD.md`
 - [x] **Fase 2**: Rencana tabungan, tagihan simulasi, `LedgerService`, dashboard, tarik dana, autodebet.
 - [x] **Fase 3**: Peternak dan hewan: profil, verifikasi, CRUD hewan + media, review admin, katalog.
 - [x] **Fase 4**: Wilayah, zona, biaya, jendela musim, kuota (Filament / Admin Panel).
-- [~] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
+- [x] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
 - [ ] **Fase 6**: Status, bukti, timeline; dua alur metode.
 - [ ] **Fase 7**: Tiket tiga tipe, catatan pesanan, notifikasi, pengumuman.
 - [ ] **Fase 8**: Laporan, audit log, seeder lengkap, polesan UI, Lighthouse, pengujian.
+
+## Langkah Fase 5
+- Migrasi: `orders`, `order_status_logs`, `payouts`.
+- Enums: `OrderMethod` (`sembelih_tim`, `kirim_hidup`), `OrderStatus` (11 status sesuai PRD), `PayoutStatus` (`tertahan`, `dibayarkan`, `dibatalkan`).
+- Service: `OrderService` (reservasi, perhitungan biaya, konfirmasi pesanan, pembatalan mandiri sebelum jadwal, kadaluwarsa reservasi).
+- Controllers & UI:
+  - Penabung: Beli/Reservasi hewan, Rincian biaya transparan (BR-09), Konfirmasi dengan persetujuan wakalah atau data penerima (BR-12), Pembatalan mandiri (BR-14), Daftar & Detail pesanan.
+  - Peternak: Daftar pesanan dengan privasi ketat tanpa identitas pembeli (BR-10), Daftar dan ringkasan Payout status tertahan/dibayarkan (BR-13).
+- Scheduled Task: `reservations:expire` dijalankan setiap 5 menit untuk melepaskan reservasi yang habis waktu.
+- Tests Fase 5 (`OrderServiceTest.php`):
+  - Validasi jendela pembelian per metode (BR-05).
+  - Validasi dukungan zona layanan (BR-07).
+  - Kalkulasi biaya & komisi platform (BR-09).
+  - Penguncian hewan berstatus `dipesan` saat reservasi (BR-06).
+  - Validasi saldo tabungan mencukupi saat reservasi.
+  - Akad wakalah untuk sembelih tim & data penerima untuk kirim hidup (BR-12).
+  - Pemotongan saldo tabungan lewat `LedgerService` & pembuatan escrow payout `tertahan` (BR-01, BR-03, BR-13).
+  - Pembatalan mandiri sebelum jadwal dengan pengembalian dana penuh via `LedgerService` (BR-14).
+  - Pelepasan hewan saat reservasi kedaluwarsa tanpa pemotongan saldo.
+  - Privasi data pembeli di tampilan peternak (BR-10).
 
 ## Langkah Fase 4
 - Migrasi: `service_zones`, `fee_rules`, `slaughter_quotas`.
