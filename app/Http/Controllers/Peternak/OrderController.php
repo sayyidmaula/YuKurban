@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Peternak;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payout;
+use App\Services\OrderService;
+use Exception;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -78,6 +81,38 @@ class OrderController extends Controller
                 'total_dibayarkan' => $totalDibayarkan,
             ],
         ]);
+    }
+
+    public function markReady(Request $request, Order $order): RedirectResponse
+    {
+        $profile = $request->user()->peternakProfile;
+        if (! $profile || $order->animal->peternak_profile_id !== $profile->id) {
+            abort(403);
+        }
+
+        try {
+            app(OrderService::class)->markPeternakReady($order, $request->user());
+
+            return back()->with('success', 'Hewan kurban berhasil ditandai siap di kandang.');
+        } catch (Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function addNote(Request $request, Order $order): RedirectResponse
+    {
+        $profile = $request->user()->peternakProfile;
+        if (! $profile || $order->animal->peternak_profile_id !== $profile->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:1000'],
+        ]);
+
+        app(OrderService::class)->addNote($order, $request->user(), $validated['body']);
+
+        return back()->with('success', 'Catatan pesanan berhasil ditambahkan.');
     }
 }
 

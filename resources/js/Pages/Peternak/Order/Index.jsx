@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import PeternakLayout from '@/Layouts/PeternakLayout';
 import { formatRupiah, formatTanggalWaktu } from '@/Utils/format';
 import { ShoppingBag, ShieldCheck, Calendar, Clock, CheckCircle2 } from 'lucide-react';
@@ -88,6 +88,26 @@ export default function PeternakOrderIndex({ orders }) {
                                             {ord.scheduled_at ? formatTanggalWaktu(ord.scheduled_at) : 'Menunggu Jadwal Tim'}
                                         </span>
                                     </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-border flex items-center justify-between">
+                                    <span className="text-[11px] text-muted">Kesiapan Kandang:</span>
+                                    {ord.peternak_ready_at ? (
+                                        <div className="inline-flex items-center gap-1.5 text-xs text-green-800 font-semibold bg-green-50 px-3 py-1.5 rounded-btn border border-green-200">
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                            <span>Siap sejak {formatTanggalWaktu(ord.peternak_ready_at)}</span>
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            as="button"
+                                            method="post"
+                                            href={`/peternak/pesanan/${ord.id}/siap`}
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3.5 py-1.5 rounded-btn transition-colors"
+                                        >
+                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                            <span>Tandai Hewan Siap di Kandang</span>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -9,9 +9,37 @@ Sumber kebenaran tunggal: `docs/PRD.md`
 - [x] **Fase 3**: Peternak dan hewan: profil, verifikasi, CRUD hewan + media, review admin, katalog.
 - [x] **Fase 4**: Wilayah, zona, biaya, jendela musim, kuota (Filament / Admin Panel).
 - [x] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
-- [ ] **Fase 6**: Status, bukti, timeline; dua alur metode.
+- [x] **Fase 6**: Status, bukti, timeline; dua alur metode.
 - [ ] **Fase 7**: Tiket tiga tipe, catatan pesanan, notifikasi, pengumuman.
 - [ ] **Fase 8**: Laporan, audit log, seeder lengkap, polesan UI, Lighthouse, pengujian.
+
+## Langkah Fase 6
+- Migrasi: `order_evidences` (stage, type, path, uploaded_by), `order_notes` (user_id, body).
+- Models: `OrderEvidence`, `OrderNote`, dengan relasi ke `Order` dan `User`.
+- State Machine & Workflow di `OrderService`:
+  - **Sembelih Tim**: dikonfirmasi → dijadwalkan (validasi kuota harian BR-08) → disembelih → disalurkan (set `auto_confirm_at` 48 jam) → penabung konfirmasi / auto-confirm → selesai (rilis payout status `dibayarkan` BR-13, hewan menjadi `terjual`).
+  - **Kirim Hidup**: dikonfirmasi → dijadwalkan_kirim → dalam_perjalanan → diterima (set `auto_confirm_at` 48 jam) → penabung konfirmasi / auto-confirm → selesai (rilis payout status `dibayarkan` BR-13, hewan menjadi `terjual`).
+  - Tolak transisi yang tidak valid.
+  - Aksi peternak: `markPeternakReady` menandai kesiapan hewan di kandang.
+  - Upload bukti (`addEvidence`) dan catatan internal (`addNote`).
+  - Scheduled command `orders:auto-confirm` (dijalankan setiap 15 menit) untuk menyelesaikan pesanan yang melewati batas waktu konfirmasi tanpa dispute.
+- Admin Panel Filament:
+  - Resource `OrderResource` (`/admin/orders`) dengan tabel interaktif, filter metode & status, dan modal aksi alur: jadwalkan sembelih, tandai disembelih, tandai disalurkan, jadwalkan kirim, dalam perjalanan, diterima, selesaikan pesanan & rilis payout, unggah bukti dokumentasi, dan tambah catatan internal.
+- UI Penabung:
+  - Timeline interaktif perjalanan kurban sesuai metode (`sembelih_tim` atau `kirim_hidup`).
+  - Galeri dokumentasi & bukti pelaksanaan (`order_evidences`).
+  - Aksi konfirmasi pesanan selesai bagi penabung saat status `disalurkan` / `diterima`.
+- UI Peternak:
+  - Tombol aksi "Tandai Hewan Siap di Kandang" beserta waktu kesiapan kandang.
+- Tests Fase 6 (`OrderWorkflowTest.php`):
+  - Alur lengkap Sembelih Tim hingga selesai dan rilis payout.
+  - Pengecekan penolakan penjadwalan saat kuota sembelih penuh (BR-08).
+  - Alur lengkap Kirim Hidup hingga selesai dan rilis payout.
+  - Penolakan transisi status tidak valid.
+  - Pencatatan kesiapan hewan oleh peternak (`peternak_ready_at`).
+  - Pengunggahan bukti dokumentasi dan catatan internal.
+  - Otomatisasi konfirmasi selesai lewat job terjadwal.
+  - Pencegahan auto-confirm untuk pesanan yang bersengketa (`is_disputed = true`).
 
 ## Langkah Fase 5
 - Migrasi: `orders`, `order_status_logs`, `payouts`.

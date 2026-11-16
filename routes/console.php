@@ -36,6 +36,12 @@ Artisan::command('reservations:expire', function (OrderService $orderService) {
     $this->info("Processed {$expiredOrders->count()} expired reservations.");
 })->purpose('Expire pending reservations past reserved_until time');
 
+Artisan::command('orders:auto-confirm', function (OrderService $orderService) {
+    $count = $orderService->autoConfirmOrders();
+    $this->info("Auto-confirmed {$count} orders.");
+})->purpose('Auto-confirm orders past deadline to status selesai');
+
 Schedule::command('invoices:expire')->everyMinute();
 Schedule::command('reservations:expire')->everyFiveMinutes();
+Schedule::command('orders:auto-confirm')->everyFifteenMinutes();
 Schedule::command('autodebet:generate')->dailyAt('06:00');

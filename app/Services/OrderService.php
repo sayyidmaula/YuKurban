@@ -10,12 +10,15 @@ use App\Enums\PayoutStatus;
 use App\Models\Animal;
 use App\Models\FeeRule;
 use App\Models\Order;
+use App\Models\OrderEvidence;
+use App\Models\OrderNote;
 use App\Models\OrderStatusLog;
 use App\Models\Payout;
 use App\Models\Region;
 use App\Models\SavingsPlan;
 use App\Models\ServiceZone;
 use App\Models\Setting;
+use App\Models\SlaughterQuota;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
@@ -355,6 +358,334 @@ class OrderService
 
             return $lockedOrder;
         });
+    }
+
+    /**
+     * Sembelih Tim Alur: Jadwalkan penyembelihan (BR-08).
+     */
+    public function scheduleSembelihTim(Order $order, Carbon|string $date, User $actor, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $date, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedOrder->status !== OrderStatus::DIKONFIRMASI) {
+                throw new Exception('Pesanan hanya dapat dijadwalkan saat berstatus dikonfirmasi.');
+            }
+
+            if (! $lockedOrder->isSembelihTim()) {
+                throw new Exception('Pesanan ini bukan metode sembelih tim.');
+            }
+
+            $scheduledDate = Carbon::parse($date)->startOfDay();
+            $remainingQuota = SlaughterQuota::getRemainingQuota($scheduledDate->format('Y-m-d'));
+
+            if ($remainingQuota <= 0) {
+                throw new Exception("Kuota sembelih pada tanggal {$scheduledDate->format('d M Y')} telah penuh.");
+            }
+
+            $lockedOrder->update([
+                'status' => OrderStatus::DIJADWALKAN,
+                'scheduled_at' => $scheduledDate,
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => OrderStatus::DIKONFIRMASI->value,
+                'to_status' => OrderStatus::DIJADWALKAN->value,
+                'actor_id' => $actor->id,
+                'note' => $note ?? "Penyembelihan dijadwalkan pada tanggal {$scheduledDate->format('d M Y')}.",
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Sembelih Tim Alur: Tandai hewan telah disembelih.
+     */
+    public function markSlaughtered(Order $order, User $actor, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedOrder->status !== OrderStatus::DIJADWALKAN) {
+                throw new Exception('Hanya pesanan yang telah dijadwalkan yang dapat ditandai disembelih.');
+            }
+
+            if (! $lockedOrder->isSembelihTim()) {
+                throw new Exception('Pesanan ini bukan metode sembelih tim.');
+            }
+
+            $lockedOrder->update([
+                'status' => OrderStatus::DISEMBELIH,
+                'slaughtered_at' => now(),
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => OrderStatus::DIJADWALKAN->value,
+                'to_status' => OrderStatus::DISEMBELIH->value,
+                'actor_id' => $actor->id,
+                'note' => $note ?? 'Penyembelihan hewan kurban telah selesai dilaksanakan.',
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Sembelih Tim Alur: Tandai daging telah disalurkan.
+     */
+    public function markDistributed(Order $order, User $actor, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedOrder->status !== OrderStatus::DISEMBELIH) {
+                throw new Exception('Hanya pesanan yang telah disembelih yang dapat ditandai disalurkan.');
+            }
+
+            if (! $lockedOrder->isSembelihTim()) {
+                throw new Exception('Pesanan ini bukan metode sembelih tim.');
+            }
+
+            $autoConfirmHours = (int) Setting::get('auto_confirm_hours', 48);
+
+            $lockedOrder->update([
+                'status' => OrderStatus::DISALURKAN,
+                'delivered_at' => now(),
+                'auto_confirm_at' => now()->addHours($autoConfirmHours),
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => OrderStatus::DISEMBELIH->value,
+                'to_status' => OrderStatus::DISALURKAN->value,
+                'actor_id' => $actor->id,
+                'note' => $note ?? 'Daging kurban telah berhasil didistribusikan kepada penerima manfaat.',
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Kirim Hidup Alur: Jadwalkan pengiriman hewan hidup.
+     */
+    public function scheduleKirimHidup(Order $order, Carbon|string $date, User $actor, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $date, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedOrder->status !== OrderStatus::DIKONFIRMASI) {
+                throw new Exception('Pesanan hanya dapat dijadwalkan saat berstatus dikonfirmasi.');
+            }
+
+            if (! $lockedOrder->isKirimHidup()) {
+                throw new Exception('Pesanan ini bukan metode kirim hidup.');
+            }
+
+            $scheduledDate = Carbon::parse($date);
+
+            $lockedOrder->update([
+                'status' => OrderStatus::DIJADWALKAN_KIRIM,
+                'scheduled_at' => $scheduledDate,
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => OrderStatus::DIKONFIRMASI->value,
+                'to_status' => OrderStatus::DIJADWALKAN_KIRIM->value,
+                'actor_id' => $actor->id,
+                'note' => $note ?? "Pengiriman hewan dijadwalkan pada tanggal {$scheduledDate->format('d M Y H:i')}.",
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Kirim Hidup Alur: Tandai hewan dalam perjalanan pengiriman.
+     */
+    public function markInTransit(Order $order, User $actor, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedOrder->status !== OrderStatus::DIJADWALKAN_KIRIM) {
+                throw new Exception('Hanya pesanan yang telah dijadwalkan kirim yang dapat ditandai dalam perjalanan.');
+            }
+
+            if (! $lockedOrder->isKirimHidup()) {
+                throw new Exception('Pesanan ini bukan metode kirim hidup.');
+            }
+
+            $lockedOrder->update([
+                'status' => OrderStatus::DALAM_PERJALANAN,
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => OrderStatus::DIJADWALKAN_KIRIM->value,
+                'to_status' => OrderStatus::DALAM_PERJALANAN->value,
+                'actor_id' => $actor->id,
+                'note' => $note ?? 'Hewan kurban dalam perjalanan menuju alamat penerima.',
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Kirim Hidup Alur: Tandai hewan telah diterima pemesan.
+     */
+    public function markDelivered(Order $order, User $actor, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedOrder->status !== OrderStatus::DALAM_PERJALANAN) {
+                throw new Exception('Hanya pesanan dalam perjalanan yang dapat ditandai diterima.');
+            }
+
+            if (! $lockedOrder->isKirimHidup()) {
+                throw new Exception('Pesanan ini bukan metode kirim hidup.');
+            }
+
+            $autoConfirmHours = (int) Setting::get('auto_confirm_hours', 48);
+
+            $lockedOrder->update([
+                'status' => OrderStatus::DITERIMA,
+                'delivered_at' => now(),
+                'auto_confirm_at' => now()->addHours($autoConfirmHours),
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => OrderStatus::DALAM_PERJALANAN->value,
+                'to_status' => OrderStatus::DITERIMA->value,
+                'actor_id' => $actor->id,
+                'note' => $note ?? 'Hewan kurban telah berhasil diterima di alamat tujuan.',
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Konfirmasi Selesai Pesanan & Rilis Payout ke Peternak (BR-13).
+     */
+    public function completeOrder(Order $order, ?User $actor = null, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            if (! in_array($lockedOrder->status, [OrderStatus::DISALURKAN, OrderStatus::DITERIMA], true)) {
+                throw new Exception('Hanya pesanan yang sudah disalurkan atau diterima yang dapat diselesaikan.');
+            }
+
+            $fromStatus = $lockedOrder->status;
+
+            $lockedOrder->update([
+                'status' => OrderStatus::SELESAI,
+            ]);
+
+            // Release Escrow Payout (BR-13)
+            if ($lockedOrder->payout && $lockedOrder->payout->status === PayoutStatus::TERTAHAN) {
+                $lockedOrder->payout->update([
+                    'status' => PayoutStatus::DIBAYARKAN,
+                    'released_at' => now(),
+                ]);
+            }
+
+            // Animal lifecycle: mark as TERJUAL
+            $animal = Animal::where('id', $lockedOrder->animal_id)->lockForUpdate()->first();
+            if ($animal) {
+                $animal->update([
+                    'status' => AnimalStatus::TERJUAL,
+                ]);
+            }
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => $fromStatus->value,
+                'to_status' => OrderStatus::SELESAI->value,
+                'actor_id' => $actor?->id,
+                'note' => $note ?? 'Pesanan telah selesai. Dana payout diteruskan ke peternak.',
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Peternak: Tandai hewan kurban siap diambil / dikirim.
+     */
+    public function markPeternakReady(Order $order, User $actor, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($order, $actor, $note) {
+            $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+            $lockedOrder->update([
+                'peternak_ready_at' => now(),
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => $lockedOrder->status->value,
+                'to_status' => $lockedOrder->status->value,
+                'actor_id' => $actor->id,
+                'note' => $note ?? 'Peternak mengonfirmasi hewan kurban telah siap di kandang.',
+            ]);
+
+            return $lockedOrder;
+        });
+    }
+
+    /**
+     * Upload / record evidence.
+     */
+    public function addEvidence(Order $order, string $stage, string $type, string $path, ?User $actor = null): OrderEvidence
+    {
+        return OrderEvidence::create([
+            'order_id' => $order->id,
+            'stage' => $stage,
+            'type' => $type,
+            'path' => $path,
+            'uploaded_by' => $actor?->id,
+        ]);
+    }
+
+    /**
+     * Add internal order note (for admin and peternak).
+     */
+    public function addNote(Order $order, User $user, string $body): OrderNote
+    {
+        return OrderNote::create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'body' => $body,
+        ]);
+    }
+
+    /**
+     * Auto-confirm eligible orders past auto_confirm_at.
+     */
+    public function autoConfirmOrders(): int
+    {
+        $eligibleOrders = Order::whereIn('status', [OrderStatus::DISALURKAN, OrderStatus::DITERIMA])
+            ->whereNotNull('auto_confirm_at')
+            ->where('auto_confirm_at', '<=', now())
+            ->where('is_disputed', false)
+            ->get();
+
+        $count = 0;
+        foreach ($eligibleOrders as $order) {
+            $this->completeOrder($order, null, 'Otomatis selesai setelah batas waktu konfirmasi terlampaui.');
+            $count++;
+        }
+
+        return $count;
     }
 }
 

@@ -96,6 +96,16 @@ class Order extends Model
         return $this->hasOne(Payout::class);
     }
 
+    public function evidences(): HasMany
+    {
+        return $this->hasMany(OrderEvidence::class)->latest();
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(OrderNote::class)->latest();
+    }
+
     public function isSembelihTim(): bool
     {
         return $this->method === OrderMethod::SEMBELIH_TIM;

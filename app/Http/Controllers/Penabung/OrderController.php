@@ -116,7 +116,7 @@ class OrderController extends Controller
             abort(403);
         }
 
-        $order->load(['animal.media', 'region', 'savingsPlan', 'statusLogs']);
+        $order->load(['animal.media', 'region', 'savingsPlan', 'statusLogs', 'evidences.uploader']);
 
         return Inertia::render('Penabung/Order/Show', [
             'order' => $order,
@@ -173,6 +173,21 @@ class OrderController extends Controller
             $this->orderService->cancelBeforeSchedule($order, $request->user(), 'Dibatalkan oleh penabung.');
 
             return back()->with('success', 'Pesanan berhasil dibatalkan dan seluruh dana dikembalikan ke tabungan Anda.');
+        } catch (Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function complete(Request $request, Order $order): RedirectResponse
+    {
+        if ($order->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        try {
+            $this->orderService->completeOrder($order, $request->user(), 'Dikonfirmasi selesai oleh pemesan.');
+
+            return back()->with('success', 'Pesanan telah berhasil diselesaikan. Terima kasih atas kepercayaan Anda berkurban bersama YuKurban!');
         } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }

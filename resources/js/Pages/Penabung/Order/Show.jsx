@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import PenabungLayout from '@/Layouts/PenabungLayout';
 import { formatRupiah, formatTanggalWaktu } from '@/Utils/format';
-import { ArrowLeft, Clock, ShieldCheck, CheckCircle2, AlertTriangle, Truck, MapPin, Receipt, XCircle } from 'lucide-react';
+import { ArrowLeft, Clock, ShieldCheck, CheckCircle2, AlertTriangle, Truck, MapPin, Receipt, XCircle, Camera } from 'lucide-react';
 
 export default function OrderShow({ order }) {
     const isReserved = order.status === 'direservasi';
@@ -164,6 +164,110 @@ export default function OrderShow({ order }) {
                         </div>
                     </div>
                 </div>
+
+                {/* Timeline Perkembangan Kurban (Fase 6) */}
+                {!isReserved && !isCancelled && (
+                    <div className="bg-white border border-border rounded-card p-6 shadow-sm space-y-4">
+                        <h3 className="text-sm font-bold text-green-900 border-b border-border pb-2 flex items-center justify-between">
+                            <span>Perjalanan Kurban Anda</span>
+                            <span className="text-xs font-normal text-muted capitalize">
+                                Alur {order.method === 'sembelih_tim' ? 'Sembelih Tim' : 'Kirim Hidup'}
+                            </span>
+                        </h3>
+
+                        <div className="space-y-4 pt-1">
+                            {(order.method === 'sembelih_tim' ? [
+                                { title: 'Pesanan Dikonfirmasi', desc: 'Pembayaran telah didebet dari tabungan Anda.', time: order.confirmed_at, done: true },
+                                { title: 'Dijadwalkan Sembelih', desc: order.scheduled_at ? `Dijadwalkan pada ${formatTanggalWaktu(order.scheduled_at)}` : 'Menunggu penjadwalan oleh tim kurban.', time: order.scheduled_at, done: ['dijadwalkan', 'disembelih', 'disalurkan', 'selesai'].includes(order.status) },
+                                { title: 'Penyembelihan Sesuai Syariat', desc: order.slaughtered_at ? `Disembelih pada ${formatTanggalWaktu(order.slaughtered_at)}` : 'Proses penyembelihan atas nama penabung.', time: order.slaughtered_at, done: ['disembelih', 'disalurkan', 'selesai'].includes(order.status) },
+                                { title: 'Penyaluran Daging Kurban', desc: order.delivered_at ? `Daging disalurkan pada ${formatTanggalWaktu(order.delivered_at)}` : 'Daging didistribusikan ke penerima manfaat.', time: order.delivered_at, done: ['disalurkan', 'selesai'].includes(order.status) },
+                                { title: 'Pelaksanaan Kurban Selesai', desc: 'Amanah kurban telah tuntas terlaksana.', done: order.status === 'selesai' },
+                            ] : [
+                                { title: 'Pesanan Dikonfirmasi', desc: 'Pembayaran telah didebet dari tabungan Anda.', time: order.confirmed_at, done: true },
+                                { title: 'Dijadwalkan Pengiriman', desc: order.scheduled_at ? `Dijadwalkan pada ${formatTanggalWaktu(order.scheduled_at)}` : 'Menunggu konfirmasi jadwal antar dari mitra.', time: order.scheduled_at, done: ['dijadwalkan_kirim', 'dalam_perjalanan', 'diterima', 'selesai'].includes(order.status) },
+                                { title: 'Dalam Perjalanan Pengiriman', desc: 'Hewan kurban diantar menggunakan armada khusus.', done: ['dalam_perjalanan', 'diterima', 'selesai'].includes(order.status) },
+                                { title: 'Hewan Diterima di Tujuan', desc: order.delivered_at ? `Tiba pada ${formatTanggalWaktu(order.delivered_at)}` : 'Penerimaan oleh pemesan atau wakil di lokasi.', time: order.delivered_at, done: ['diterima', 'selesai'].includes(order.status) },
+                                { title: 'Pengiriman Kurban Selesai', desc: 'Hewan kurban telah siap di lokasi Anda.', done: order.status === 'selesai' },
+                            ]).map((step, idx) => (
+                                <div key={idx} className="flex items-start gap-3 relative">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 z-10 ${
+                                        step.done ? 'bg-green-600 text-white shadow-sm' : 'bg-gray-100 text-muted border border-border'
+                                    }`}>
+                                        {step.done ? '✓' : idx + 1}
+                                    </div>
+                                    <div className="flex-1 pb-2">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className={`text-xs font-bold ${step.done ? 'text-green-900' : 'text-muted'}`}>
+                                                {step.title}
+                                            </h4>
+                                            {step.time && (
+                                                <span className="text-[10px] text-muted">{formatTanggalWaktu(step.time)}</span>
+                                            )}
+                                        </div>
+                                        <p className="text-[11px] text-muted mt-0.5">{step.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Evidence Gallery (Fase 6) */}
+                {order.evidences && order.evidences.length > 0 && (
+                    <div className="bg-white border border-border rounded-card p-5 shadow-sm space-y-3">
+                        <h3 className="text-sm font-bold text-green-900 border-b border-border pb-2 flex items-center gap-2">
+                            <Camera className="w-4 h-4 text-green-600" />
+                            <span>Dokumentasi & Bukti Pelaksanaan ({order.evidences.length})</span>
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {order.evidences.map((ev) => (
+                                <div key={ev.id} className="p-3 bg-surface border border-border rounded-btn text-xs space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <span className="capitalize font-bold text-green-900 px-2 py-0.5 rounded bg-green-100 text-[10px]">
+                                            Tahap: {ev.stage}
+                                        </span>
+                                        <span className="text-[10px] text-muted uppercase font-semibold">{ev.type}</span>
+                                    </div>
+                                    <div className="text-text font-mono text-[11px] truncate bg-white p-2 rounded border border-border">
+                                        {ev.path}
+                                    </div>
+                                    <span className="text-[10px] text-muted block">
+                                        Diunggah: {formatTanggalWaktu(ev.created_at)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Konfirmasi Selesai oleh Penabung (Fase 6) */}
+                {['disalurkan', 'diterima'].includes(order.status) && (
+                    <div className="bg-green-50 border border-green-200 rounded-card p-5 shadow-sm space-y-3">
+                        <div className="flex items-center gap-2.5">
+                            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                            <h4 className="text-sm font-bold text-green-900">
+                                {order.method === 'sembelih_tim' ? 'Penyaluran Daging Selesai' : 'Hewan Telah Tiba di Lokasi'}
+                            </h4>
+                        </div>
+                        <p className="text-xs text-green-800 leading-relaxed">
+                            Hewan kurban telah {order.method === 'sembelih_tim' ? 'disembelih dan daging berhasil disalurkan ke penerima manfaat' : 'diterima di alamat tujuan'}. Mohon konfirmasi bahwa pesanan kurban ini telah selesai dengan baik.
+                        </p>
+                        {order.auto_confirm_at && (
+                            <p className="text-[11px] text-muted italic">
+                                * Pesanan akan otomatis selesai pada {formatTanggalWaktu(order.auto_confirm_at)} jika tidak ada tiket laporan masalah yang dibuka.
+                            </p>
+                        )}
+                        <Link
+                            as="button"
+                            method="post"
+                            href={`/pesanan/${order.id}/selesai`}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-btn bg-green-600 text-white font-bold text-xs hover:bg-green-700 shadow-sm transition-colors"
+                        >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Konfirmasi Pesanan Selesai</span>
+                        </Link>
+                    </div>
+                )}
 
                 {/* Form Konfirmasi Jika Masih Reservasi */}
                 {isReserved && (

@@ -67,7 +67,7 @@ Route::middleware(['auth', 'role:penabung'])->group(function () {
     Route::post('/tagihan/{invoice}/simulasi-berhasil', [InvoiceController::class, 'simulatePay'])->name('tagihan.simulasi.berhasil');
     Route::post('/tagihan/{invoice}/simulasi-gagal', [InvoiceController::class, 'simulateFail'])->name('tagihan.simulasi.gagal');
 
-    // Alur Pemesanan & Pembelian (Fase 5)
+    // Alur Pemesanan & Pembelian (Fase 5 & Fase 6)
     Route::get('/beli/{animal}', [PenabungOrderController::class, 'create'])->name('order.create');
     Route::post('/beli/{animal}/reservasi', [PenabungOrderController::class, 'reserve'])->name('order.reserve');
     Route::get('/pesanan', [PenabungOrderController::class, 'index'])->name('pesanan.index');
@@ -75,6 +75,7 @@ Route::middleware(['auth', 'role:penabung'])->group(function () {
     Route::post('/pesanan/{order}/konfirmasi', [PenabungOrderController::class, 'confirm'])->name('pesanan.confirm');
     Route::get('/pesanan/{order}/sukses', [PenabungOrderController::class, 'sukses'])->name('pesanan.sukses');
     Route::post('/pesanan/{order}/batal', [PenabungOrderController::class, 'cancel'])->name('pesanan.cancel');
+    Route::post('/pesanan/{order}/selesai', [PenabungOrderController::class, 'complete'])->name('pesanan.complete');
 
     Route::get('/akun', function (Request $request) {
         return Inertia::render('Penabung/Akun');
@@ -100,8 +101,10 @@ Route::prefix('peternak')->name('peternak.')->middleware(['auth', 'role:peternak
     Route::get('/hewan/{animal}/edit', [HewanController::class, 'edit'])->name('hewan.edit');
     Route::match(['put', 'patch'], '/hewan/{animal}', [HewanController::class, 'update'])->name('hewan.update');
 
-    // Pesanan & Payout Peternak (Fase 5 - BR-10, BR-13)
+    // Pesanan & Payout Peternak (Fase 5 & Fase 6 - BR-10, BR-13)
     Route::get('/pesanan', [PeternakOrderController::class, 'index'])->name('pesanan.index');
+    Route::post('/pesanan/{order}/siap', [PeternakOrderController::class, 'markReady'])->name('pesanan.ready');
+    Route::post('/pesanan/{order}/catatan', [PeternakOrderController::class, 'addNote'])->name('pesanan.note');
     Route::get('/payout', [PeternakOrderController::class, 'payoutIndex'])->name('payout.index');
 
     Route::get('/bantuan', function () {
