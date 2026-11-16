@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Region extends Model
 {
@@ -33,9 +34,13 @@ class Region extends Model
         return $this->hasMany(Animal::class);
     }
 
+    public function serviceZone(): HasOne
+    {
+        return $this->hasOne(ServiceZone::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return "{$this->city}, {$this->province}";
     }
 }
-

@@ -8,11 +8,14 @@ use App\Enums\LedgerType;
 use App\Enums\Role;
 use App\Models\Animal;
 use App\Models\AnimalMedia;
+use App\Models\FeeRule;
 use App\Models\PeternakProfile;
 use App\Models\PriceTier;
 use App\Models\Region;
 use App\Models\SavingsPlan;
+use App\Models\ServiceZone;
 use App\Models\Setting;
+use App\Models\SlaughterQuota;
 use App\Models\User;
 use App\Services\LedgerService;
 use Illuminate\Database\Seeder;
@@ -60,7 +63,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 5 Demo Regions (PRD Section 12)
+        // 5 Demo Regions & Service Zones (PRD Section 12, BR-07)
         $regions = [
             'bandung' => Region::updateOrCreate(['city' => 'Kota Bandung', 'province' => 'Jawa Barat'], ['is_active' => true]),
             'garut' => Region::updateOrCreate(['city' => 'Kabupaten Garut', 'province' => 'Jawa Barat'], ['is_active' => true]),
@@ -68,6 +71,69 @@ class DatabaseSeeder extends Seeder
             'yogya' => Region::updateOrCreate(['city' => 'Kabupaten Sleman', 'province' => 'DI Yogyakarta'], ['is_active' => true]),
             'makassar' => Region::updateOrCreate(['city' => 'Kota Makassar', 'province' => 'Sulawesi Selatan'], ['is_active' => true]),
         ];
+
+        ServiceZone::updateOrCreate(
+            ['region_id' => $regions['bandung']->id],
+            ['supports_sembelih_tim' => true, 'supports_kirim_hidup' => true, 'delivery_fee' => 150000, 'is_active' => true]
+        );
+        ServiceZone::updateOrCreate(
+            ['region_id' => $regions['garut']->id],
+            ['supports_sembelih_tim' => true, 'supports_kirim_hidup' => true, 'delivery_fee' => 100000, 'is_active' => true]
+        );
+        ServiceZone::updateOrCreate(
+            ['region_id' => $regions['tasik']->id],
+            ['supports_sembelih_tim' => true, 'supports_kirim_hidup' => false, 'delivery_fee' => 0, 'is_active' => true]
+        );
+        ServiceZone::updateOrCreate(
+            ['region_id' => $regions['yogya']->id],
+            ['supports_sembelih_tim' => false, 'supports_kirim_hidup' => true, 'delivery_fee' => 250000, 'is_active' => true]
+        );
+        ServiceZone::updateOrCreate(
+            ['region_id' => $regions['makassar']->id],
+            ['supports_sembelih_tim' => true, 'supports_kirim_hidup' => false, 'delivery_fee' => 0, 'is_active' => true]
+        );
+
+        // Fee Rules (PRD Section 7, BR-09)
+        FeeRule::updateOrCreate(
+            ['animal_type' => AnimalType::KAMBING],
+            [
+                'fee_slaughter' => 250000,
+                'fee_distribution' => 150000,
+                'commission_peternak' => 100000,
+            ]
+        );
+        FeeRule::updateOrCreate(
+            ['animal_type' => AnimalType::DOMBA],
+            [
+                'fee_slaughter' => 250000,
+                'fee_distribution' => 150000,
+                'commission_peternak' => 100000,
+            ]
+        );
+        FeeRule::updateOrCreate(
+            ['animal_type' => AnimalType::SAPI],
+            [
+                'fee_slaughter' => 1500000,
+                'fee_distribution' => 800000,
+                'commission_peternak' => 500000,
+            ]
+        );
+
+        // Slaughter Quotas (PRD Section 7, BR-08)
+        $quotaDates = [
+            '2027-06-16' => 50,
+            '2027-06-17' => 40,
+            '2027-06-18' => 30,
+            '2027-06-19' => 20,
+            now()->format('Y-m-d') => 25,
+            now()->addDay()->format('Y-m-d') => 25,
+        ];
+        foreach ($quotaDates as $date => $quota) {
+            SlaughterQuota::updateOrCreate(
+                ['date' => $date],
+                ['quota' => $quota]
+            );
+        }
 
         // 3 Peternak (1 terverifikasi, 1 menunggu, 1 ditolak - PRD Section 12)
         $peternakUsers = [];

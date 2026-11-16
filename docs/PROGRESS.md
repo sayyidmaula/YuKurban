@@ -7,8 +7,8 @@ Sumber kebenaran tunggal: `docs/PRD.md`
 - [x] **Fase 1**: Inisialisasi proyek, autentikasi, peran, layout dan token desain, PWA dasar.
 - [x] **Fase 2**: Rencana tabungan, tagihan simulasi, `LedgerService`, dashboard, tarik dana, autodebet.
 - [x] **Fase 3**: Peternak dan hewan: profil, verifikasi, CRUD hewan + media, review admin, katalog.
-- [~] **Fase 4**: Wilayah, zona, biaya, jendela musim, kuota (Filament / Admin Panel).
-- [ ] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
+- [x] **Fase 4**: Wilayah, zona, biaya, jendela musim, kuota (Filament / Admin Panel).
+- [~] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
 - [ ] **Fase 6**: Status, bukti, timeline; dua alur metode.
 - [ ] **Fase 7**: Tiket tiga tipe, catatan pesanan, notifikasi, pengumuman.
 - [ ] **Fase 8**: Laporan, audit log, seeder lengkap, polesan UI, Lighthouse, pengujian.
