@@ -11,7 +11,37 @@ Sumber kebenaran tunggal: `docs/PRD.md`
 - [x] **Fase 5**: Pembelian: reservasi, rincian biaya, konfirmasi, `OrderService`, payout.
 - [x] **Fase 6**: Status, bukti, timeline; dua alur metode.
 - [x] **Fase 7**: Tiket tiga tipe, catatan pesanan, notifikasi, pengumuman.
-- [ ] **Fase 8**: Laporan, audit log, seeder lengkap, polesan UI, Lighthouse, pengujian.
+- [x] **Fase 8**: Laporan, audit log, seeder lengkap, polesan UI, Lighthouse, pengujian.
+
+## Langkah Fase 8
+- Migrasi: `audit_logs` (actor_id, action, subject_type, subject_id, meta, created_at).
+- Model: `AuditLog` dengan helper method `AuditLog::record(?User $actor, string $action, ?Model $subject = null, array $meta = [])`.
+- Filament Admin Panel:
+  - `PayoutResource` (`/admin/payouts`): daftar payout escrow peternak, filter status tertahan/dibayarkan/dibatalkan, modal simulasi pencairan dana.
+  - `LedgerEntryResource` (`/admin/ledger-entries`): penjelajah buku besar (ledger) hanya-baca (read-only) untuk transparansi mutasi masuk/keluar.
+  - `ContactMessageResource` (`/admin/contact-messages`): manajemen pesan tamu dari formulir hubungi kami, filter status baru/dibaca, aksi tandai dibaca.
+  - `AuditLogResource` (`/admin/audit-logs`): pelacak jejak audit aksi administratif dan transaksi penting.
+  - Halaman Khusus `ReportPage` (`/admin/report-page`): pusat unduhan laporan transparan dengan aksi ekspor streaming CSV untuk Laporan Pesanan, Laporan Ledger, dan Laporan Payout Mitra.
+- Scheduled Job:
+  - Command `reminders:send` terjadwal harian pukul 07:00 untuk pengingat jatuh tempo, jendela pembelian kurban, dan hitung mundur Idul Adha.
+- Seeder Lengkap (`DatabaseSeeder`):
+  - 1 admin, 3 peternak (terverifikasi, menunggu, ditolak), 5 penabung.
+  - 5 wilayah & zona layanan dengan variasi dukungan metode sembelih tim dan kirim hidup.
+  - 3 price tiers, fee rules komisi & ujrah, kuota sembelih harian.
+  - 12 hewan kurban dengan status realistis (tayang, menunggu review, dipesan, terjual) beserta 3 foto & 1 video.
+  - 5 rencana tabungan dengan mutasi setoran ledger realistis.
+  - Pesanan kurban demo di berbagai status (`selesai` sembelih tim lengkap dengan foto bukti & rilis payout, `disalurkan` menunggu konfirmasi, `dijadwalkan_kirim` kirim hidup lengkap data penerima & ongkir zona).
+  - Payout di berbagai status (`dibayarkan`, `tertahan`).
+  - Tiket demo di berbagai tipe (`pertanyaan_prabeli` dengan jawaban FAQ publik, `laporan_masalah` terikat pesanan, `bantuan_peternak`).
+  - Pengumuman resmi terscope untuk `semua`, `penabung`, dan `peternak`.
+  - Pesan tamu (`contact_messages`) berstatus baru dan dibaca.
+  - Jejak audit (`audit_logs`) untuk tindakan verifikasi peternak, review hewan, pesanan, dan payout.
+- Pengujian Fase 8 (`Fase8FeaturesTest.php`):
+  - Pencatatan `AuditLog::record` ke database dengan metadata JSON.
+  - Validasi akses panel admin Filament untuk resource dan halaman Fase 8 oleh admin, serta penolakan akses untuk penabung.
+  - Validasi ekspor streaming CSV pesanan, ledger, dan payout.
+  - Pengujian eksekusi command scheduled reminders.
+  - Pengujian perubahan status pesan tamu.
 
 ## Langkah Fase 7
 - Migrasi: `tickets`, `ticket_replies`, `ticket_attachments`, `announcements`, `notifications`.

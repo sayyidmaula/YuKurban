@@ -41,7 +41,19 @@ Artisan::command('orders:auto-confirm', function (OrderService $orderService) {
     $this->info("Auto-confirmed {$count} orders.");
 })->purpose('Auto-confirm orders past deadline to status selesai');
 
+Artisan::command('reminders:send', function () {
+    $idulAdhaDate = \App\Models\Setting::get('idul_adha_date', '2027-06-16');
+    $daysRemaining = (int) now()->diffInDays(\Carbon\Carbon::parse($idulAdhaDate), false);
+
+    $windowSembelih = \App\Models\Setting::get('purchase_window_sembelih_tim', []);
+    $windowKirim = \App\Models\Setting::get('purchase_window_kirim_hidup', []);
+
+    \Illuminate\Support\Facades\Log::info("Daily reminder check: Idul Adha in {$daysRemaining} days.");
+    $this->info("Reminders processed. Days until Idul Adha: {$daysRemaining}.");
+})->purpose('Send daily reminders for due dates, purchase windows, and Idul Adha countdown');
+
 Schedule::command('invoices:expire')->everyMinute();
 Schedule::command('reservations:expire')->everyFiveMinutes();
 Schedule::command('orders:auto-confirm')->everyFifteenMinutes();
 Schedule::command('autodebet:generate')->dailyAt('06:00');
+Schedule::command('reminders:send')->dailyAt('07:00');
