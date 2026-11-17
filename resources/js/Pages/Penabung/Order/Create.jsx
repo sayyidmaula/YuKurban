@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import PenabungLayout from '@/Layouts/PenabungLayout';
-import { formatRupiah } from '@/Utils/format';
+import { formatRupiah, getAnimalImageUrl } from '@/Utils/format';
 import { ArrowLeft, CheckCircle2, ShieldCheck, AlertCircle, ShoppingBag, MapPin, Wallet, Calendar } from 'lucide-react';
 
 export default function OrderCreate({
@@ -113,15 +113,17 @@ export default function OrderCreate({
                     <div className="bg-white border border-border rounded-card p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-btn bg-surface border border-border overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                {animal.media && animal.media[0] ? (
-                                    <img
-                                        src={`/storage/${animal.media[0].path}`}
-                                        alt={animal.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <span className="text-xs text-muted">Foto</span>
-                                )}
+                                <img
+                                    src={getAnimalImageUrl(animal.media?.[0]?.path, animal.type)}
+                                    alt={animal.title}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        const fallback = animal.type === 'sapi' ? '/animals/sapi-01.jpg' : animal.type === 'kambing' ? '/animals/kambing-01.jpg' : '/animals/domba-01.jpg';
+                                        if (!e.currentTarget.src.endsWith(fallback)) {
+                                            e.currentTarget.src = fallback;
+                                        }
+                                    }}
+                                />
                             </div>
                             <div>
                                 <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-green-50 text-green-700 capitalize">

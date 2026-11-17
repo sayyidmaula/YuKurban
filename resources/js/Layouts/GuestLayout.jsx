@@ -1,12 +1,8 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
-import SimulationBanner from '@/Components/SimulationBanner';
-
 export default function GuestLayout({ children }) {
     return (
         <div className="min-h-screen flex flex-col bg-surface text-text">
-            <SimulationBanner />
-
             <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6">
                 <div className="mb-6 flex flex-col items-center">
                     <Link href="/" className="flex items-center gap-2.5">

@@ -26,3 +26,22 @@ export function formatTanggalWaktu(dateString) {
     }).format(date);
 }
 
+export function getAnimalImageUrl(path, type = 'domba') {
+    if (path) {
+        if (path.startsWith('http://') || path.startsWith('https://')) {
+            return path;
+        }
+        if (path.startsWith('/')) {
+            return path;
+        }
+        if (path.startsWith('animals/')) {
+            return `/${path}`;
+        }
+        return `/storage/${path}`;
+    }
+    const safeType = (type || 'domba').toLowerCase();
+    if (safeType === 'sapi') return '/animals/sapi-01.jpg';
+    if (safeType === 'kambing') return '/animals/kambing-01.jpg';
+    return '/animals/domba-01.jpg';
+}
+

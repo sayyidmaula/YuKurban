@@ -2,7 +2,7 @@ import React from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import PublicLayout from '@/Layouts/PublicLayout';
 import PenabungLayout from '@/Layouts/PenabungLayout';
-import { formatRupiah } from '@/Utils/format';
+import { formatRupiah, getAnimalImageUrl } from '@/Utils/format';
 import { Compass, Filter, ArrowUpDown, ShieldCheck, MapPin, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function KatalogIndex({
@@ -33,7 +33,7 @@ export default function KatalogIndex({
         <Layout>
             <Head title="Katalog Hewan Kurban - YuKurban" />
 
-            <div className="space-y-6 max-w-7xl mx-auto">
+            <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-16 sm:pb-24">
                 {/* Header & Subtitle */}
                 <div className="text-center sm:text-left border-b border-border pb-4">
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-green-900">
@@ -143,18 +143,17 @@ export default function KatalogIndex({
                                 <div>
                                     {/* Thumbnail Image */}
                                     <div className="h-48 bg-surface relative overflow-hidden flex items-center justify-center">
-                                        {animal.thumbnail ? (
-                                            <img
-                                                src={`/storage/${animal.thumbnail}`}
-                                                alt={animal.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                            />
-                                        ) : (
-                                            <div className="text-xs text-muted flex flex-col items-center gap-1">
-                                                <Compass className="w-8 h-8 text-muted/40" />
-                                                <span>Foto Hewan Fisik</span>
-                                            </div>
-                                        )}
+                                        <img
+                                            src={getAnimalImageUrl(animal.thumbnail, animal.type)}
+                                            alt={animal.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => {
+                                                const fallback = animal.type === 'sapi' ? '/animals/sapi-01.jpg' : animal.type === 'kambing' ? '/animals/kambing-01.jpg' : '/animals/domba-01.jpg';
+                                                if (!e.currentTarget.src.endsWith(fallback)) {
+                                                    e.currentTarget.src = fallback;
+                                                }
+                                            }}
+                                        />
 
                                         <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
                                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/95 backdrop-blur text-green-900 shadow-sm capitalize">

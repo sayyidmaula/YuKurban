@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import PublicLayout from '@/Layouts/PublicLayout';
 import PenabungLayout from '@/Layouts/PenabungLayout';
-import { formatRupiah } from '@/Utils/format';
+import { formatRupiah, getAnimalImageUrl } from '@/Utils/format';
 import { ArrowLeft, MapPin, ShieldCheck, HeartHandshake, Film, Image as ImageIcon, MessageCircleQuestion, AlertCircle, ShoppingBag } from 'lucide-react';
 
 export default function KatalogShow({ animal, isPenabung = false, savingsPlans = [] }) {
@@ -20,7 +20,7 @@ export default function KatalogShow({ animal, isPenabung = false, savingsPlans =
         <Layout>
             <Head title={`${animal.title} - Katalog Hewan Kurban`} />
 
-            <div className="max-w-5xl mx-auto space-y-6">
+            <div className="max-w-5xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-16 sm:pb-24">
                 {/* Back Link */}
                 <div className="border-b border-border pb-3">
                     <Link
@@ -68,22 +68,24 @@ export default function KatalogShow({ animal, isPenabung = false, savingsPlans =
                         <div className="bg-white border border-border rounded-card overflow-hidden shadow-sm">
                             {viewMode === 'foto' ? (
                                 <div className="aspect-[4/3] bg-surface relative flex items-center justify-center overflow-hidden">
-                                    {selectedPhoto ? (
-                                        <img
-                                            src={`/storage/${selectedPhoto}`}
-                                            alt={animal.title}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="text-xs text-muted">Belum ada foto hewan</div>
-                                    )}
+                                    <img
+                                        src={getAnimalImageUrl(selectedPhoto, animal.type)}
+                                        alt={animal.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            const fallback = animal.type === 'sapi' ? '/animals/sapi-01.jpg' : animal.type === 'kambing' ? '/animals/kambing-01.jpg' : '/animals/domba-01.jpg';
+                                            if (!e.currentTarget.src.endsWith(fallback)) {
+                                                e.currentTarget.src = fallback;
+                                            }
+                                        }}
+                                    />
                                 </div>
                             ) : (
                                 <div className="aspect-[4/3] bg-black relative flex items-center justify-center">
                                     {videos[0] ? (
                                         <video
                                             controls
-                                            src={`/storage/${videos[0].path}`}
+                                            src={getAnimalImageUrl(videos[0].path)}
                                             className="w-full h-full max-h-[480px]"
                                         />
                                     ) : (
@@ -104,9 +106,15 @@ export default function KatalogShow({ animal, isPenabung = false, savingsPlans =
                                             }`}
                                         >
                                             <img
-                                                src={`/storage/${p.path}`}
+                                                src={getAnimalImageUrl(p.path, animal.type)}
                                                 alt={`Thumbnail ${idx + 1}`}
                                                 className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    const fallback = animal.type === 'sapi' ? '/animals/sapi-01.jpg' : animal.type === 'kambing' ? '/animals/kambing-01.jpg' : '/animals/domba-01.jpg';
+                                                    if (!e.currentTarget.src.endsWith(fallback)) {
+                                                        e.currentTarget.src = fallback;
+                                                    }
+                                                }}
                                             />
                                         </button>
                                     ))}

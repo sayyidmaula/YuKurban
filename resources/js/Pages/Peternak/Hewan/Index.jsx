@@ -1,7 +1,7 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import PeternakLayout from '@/Layouts/PeternakLayout';
-import { formatRupiah } from '@/Utils/format';
+import { formatRupiah, getAnimalImageUrl } from '@/Utils/format';
 import { PlusCircle, Compass, AlertCircle, Edit, CheckCircle2, Clock } from 'lucide-react';
 
 export default function HewanIndex({ animals = [], isVerified, profileStatus }) {
@@ -61,18 +61,17 @@ export default function HewanIndex({ animals = [], isVerified, profileStatus }) 
                                 <div>
                                     {/* Thumbnail Preview */}
                                     <div className="h-44 bg-surface relative overflow-hidden flex items-center justify-center">
-                                        {animal.thumbnail ? (
-                                            <img
-                                                src={`/storage/${animal.thumbnail}`}
-                                                alt={animal.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="text-xs text-muted flex flex-col items-center gap-1">
-                                                <Compass className="w-6 h-6 text-muted/50" />
-                                                <span>Foto Hewan</span>
-                                            </div>
-                                        )}
+                                        <img
+                                            src={getAnimalImageUrl(animal.thumbnail, animal.type)}
+                                            alt={animal.title}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                const fallback = animal.type === 'sapi' ? '/animals/sapi-01.jpg' : animal.type === 'kambing' ? '/animals/kambing-01.jpg' : '/animals/domba-01.jpg';
+                                                if (!e.currentTarget.src.endsWith(fallback)) {
+                                                    e.currentTarget.src = fallback;
+                                                }
+                                            }}
+                                        />
                                         <div className="absolute top-2.5 left-2.5">
                                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/90 backdrop-blur text-green-900 capitalize shadow-sm">
                                                 {animal.type_label}

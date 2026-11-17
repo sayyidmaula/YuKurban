@@ -50,12 +50,6 @@ export default function Tagihan({ invoice }) {
                     <p className="text-xs text-muted">ID Transaksi Simulasi: #{invoice.va_code}</p>
                 </div>
 
-                {/* Banner Mode Simulasi (PRD BR-17) */}
-                <div className="p-3 bg-gold-100 border border-gold-300 rounded-btn text-gold-600 text-xs font-semibold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>MODE SIMULASI — Pembayaran ini adalah simulasi, tidak memotong uang sungguhan.</span>
-                </div>
-
                 {/* Main Invoice Card */}
                 <div className="bg-white border border-border rounded-card p-6 sm:p-8 shadow-sm space-y-6">
                     {/* Status Header */}

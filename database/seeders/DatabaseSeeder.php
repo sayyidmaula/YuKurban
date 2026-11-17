@@ -502,9 +502,24 @@ class DatabaseSeeder extends Seeder
             );
 
             if ($animal->media()->count() === 0) {
-                AnimalMedia::create(['animal_id' => $animal->id, 'type' => 'foto', 'path' => 'animals/demo-front.jpg', 'sort_order' => 1]);
-                AnimalMedia::create(['animal_id' => $animal->id, 'type' => 'foto', 'path' => 'animals/demo-side.jpg', 'sort_order' => 2]);
-                AnimalMedia::create(['animal_id' => $animal->id, 'type' => 'foto', 'path' => 'animals/demo-full.jpg', 'sort_order' => 3]);
+                $typeStr = $animal->type->value ?? $animal->type;
+                if ($typeStr === 'sapi') {
+                    $p1 = 'animals/sapi-01.jpg';
+                    $p2 = 'animals/sapi-02.jpg';
+                    $p3 = 'animals/sapi-03.jpg';
+                } elseif ($typeStr === 'kambing') {
+                    $p1 = 'animals/kambing-01.jpg';
+                    $p2 = 'animals/kambing-02.jpg';
+                    $p3 = 'animals/kambing-03.jpg';
+                } else {
+                    $p1 = 'animals/domba-01.jpg';
+                    $p2 = 'animals/domba-02.jpg';
+                    $p3 = 'animals/domba-03.jpg';
+                }
+
+                AnimalMedia::create(['animal_id' => $animal->id, 'type' => 'foto', 'path' => $p1, 'sort_order' => 1]);
+                AnimalMedia::create(['animal_id' => $animal->id, 'type' => 'foto', 'path' => $p2, 'sort_order' => 2]);
+                AnimalMedia::create(['animal_id' => $animal->id, 'type' => 'foto', 'path' => $p3, 'sort_order' => 3]);
                 AnimalMedia::create(['animal_id' => $animal->id, 'type' => 'video', 'path' => 'animals/demo-video.mp4', 'sort_order' => 10]);
             }
 

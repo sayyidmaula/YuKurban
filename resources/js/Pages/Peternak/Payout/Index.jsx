@@ -1,7 +1,6 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
 import PeternakLayout from '@/Layouts/PeternakLayout';
-import SimulationBanner from '@/Components/SimulationBanner';
 import { formatRupiah, formatTanggalWaktu } from '@/Utils/format';
 import { DollarSign, Clock, CheckCircle2, AlertCircle, ArrowUpRight } from 'lucide-react';
 
@@ -13,8 +12,6 @@ export default function PeternakPayoutIndex({ payouts, summary }) {
             <Head title="Pencairan Dana (Payout) - YuKurban Mitra" />
 
             <div className="max-w-4xl mx-auto space-y-6">
-                <SimulationBanner />
-
                 <div>
                     <h1 className="text-xl sm:text-2xl font-extrabold text-green-900">
                         Pencairan Dana Peternak (Payout)
@@ -99,11 +96,10 @@ export default function PeternakPayoutIndex({ payouts, summary }) {
                                                     {formatRupiah(p.amount)}
                                                 </td>
                                                 <td className="p-3.5 text-center">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${
-                                                        p.status === 'tertahan' ? 'bg-amber-100 text-amber-800' :
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize ${p.status === 'tertahan' ? 'bg-amber-100 text-amber-800' :
                                                         p.status === 'dibayarkan' ? 'bg-green-100 text-green-800' :
-                                                        'bg-red-100 text-red-800'
-                                                    }`}>
+                                                            'bg-red-100 text-red-800'
+                                                        }`}>
                                                         {p.status}
                                                     </span>
                                                 </td>

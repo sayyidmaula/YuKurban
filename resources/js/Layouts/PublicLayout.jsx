@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Menu, X, ArrowRight } from 'lucide-react';
-import SimulationBanner from '@/Components/SimulationBanner';
-
 export default function PublicLayout({ children }) {
     const { auth } = usePage().props;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-surface flex flex-col text-text">
-            {/* Simulation Banner */}
-            <SimulationBanner />
-
             {/* Public Header */}
             <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-border shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

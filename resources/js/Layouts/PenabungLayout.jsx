@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Home, Target, ShoppingBag, ClipboardList, User, Bell } from 'lucide-react';
-import SimulationBanner from '@/Components/SimulationBanner';
 
 export default function PenabungLayout({ children, title }) {
     const { auth, unreadNotificationsCount } = usePage().props;
@@ -17,9 +16,6 @@ export default function PenabungLayout({ children, title }) {
 
     return (
         <div className="min-h-screen bg-surface flex flex-col text-text">
-            {/* Top Simulation Banner */}
-            <SimulationBanner />
-
             {/* Desktop & Mobile Top Header */}
             <header className="sticky top-0 z-30 bg-white border-b border-border shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
